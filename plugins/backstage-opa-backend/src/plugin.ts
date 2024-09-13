@@ -1,8 +1,12 @@
 import {
   coreServices,
   createBackendPlugin,
+  createBackendModule,
 } from '@backstage/backend-plugin-api';
-import { createRouter } from './service/router';
+import { createRouter } from './service';
+import {CatalogOPAEntityValidator} from "./processor";
+import { catalogProcessingExtensionPoint } from '@backstage/plugin-catalog-node/alpha';
+import {EntityCheckerApiImpl} from "./service/entityCheckerApi";
 
 export const opaPlugin = createBackendPlugin({
   pluginId: 'opa',
@@ -41,6 +45,30 @@ export const opaPlugin = createBackendPlugin({
           path: '/health',
           allow: 'unauthenticated',
         });
+      },
+    });
+  },
+});
+
+export const catalogModuleOPAValidationEntitiesProcessor = createBackendModule({
+  pluginId: 'catalog',
+  moduleId: 'foobar',
+  register(env) {
+    env.registerInit({
+      deps: {
+        catalog: catalogProcessingExtensionPoint,
+        logger: coreServices.logger,
+        config: coreServices.rootConfig,
+      },
+      async init({ catalog, logger, config }) {
+
+        const entityCheckerApi = new EntityCheckerApiImpl({
+          logger: logger,
+          opaBaseUrl: config.getOptionalString('opaClient.baseUrl'),
+          entityCheckerEntrypoint: config.getOptionalString('opaClient.policies.entityChecker.entrypoint')
+        })
+
+        catalog.addProcessor(new CatalogOPAEntityValidator(entityCheckerApi, logger));
       },
     });
   },
