@@ -1,7 +1,5 @@
 import {Entity} from "@backstage/catalog-model";
 import {CatalogOPAEntityValidator} from "./CatalogOPAEntityValidator";
-import {mockServices} from "@backstage/backend-test-utils";
-import {LocationSpec} from "@backstage/plugin-catalog-common";
 import {OpaResult} from "../service/entityCheckerApi";
 
 describe('CatalogOPAEntityValidator', () => {
@@ -14,13 +12,6 @@ describe('CatalogOPAEntityValidator', () => {
       },
     };
 
-    const location: LocationSpec = {
-      type: 'url',
-      target:
-        'https://example.com',
-    };
-
-    const mockLogger = mockServices.logger.mock();
     const mockEntityCheckerApi = {
       checkEntity: jest.fn((): Promise<OpaResult> => Promise.resolve(
         {
@@ -36,11 +27,10 @@ describe('CatalogOPAEntityValidator', () => {
         }
       ))
     };
-    const mockCatalogProcessorEmit = jest.fn()
 
-    const processor = new CatalogOPAEntityValidator(mockEntityCheckerApi, mockLogger)
+    const processor = new CatalogOPAEntityValidator(mockEntityCheckerApi)
 
-    expect(await processor.preProcessEntity(entity, location, mockCatalogProcessorEmit)).toEqual({
+    expect(await processor.preProcessEntity(entity)).toEqual({
       apiVersion: 'backstage.io/v1alpha1',
       kind: 'Component',
       metadata: {
